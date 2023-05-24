@@ -6,6 +6,8 @@ import (
 	"siteAccess/internal/domain"
 )
 
+//go:generate mockgen -source=server.go -destination=mocks/mock.go
+
 type service interface {
 	GetTime(ctx context.Context, site string) (*domain.Time, error)
 	GetMinTime(ctx context.Context) (*domain.Site, error)

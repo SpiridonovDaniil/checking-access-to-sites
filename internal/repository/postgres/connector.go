@@ -33,16 +33,10 @@ func New(cfg config.Postgres) *Db {
 }
 
 func (d *Db) GetTime(ctx context.Context, site string) (*domain.Time, error) {
-	var result *domain.Time //TODO нужно ли делать транзакцию при зависимости использования методов и получения от них статистики?
+	var result *domain.Time
 	err := d.db.SelectContext(ctx, &result, "SELECT response_time FROM access WHERE site = $1", site)
 	if err != nil {
 		err = fmt.Errorf("get time failed, error: %w", err)
-		return nil, err
-	}
-
-	_, err = d.db.ExecContext(ctx, "UPDATE statistic SET number_of_requests = number_of_requests + 1 WHERE endpoint = 'getTime'")
-	if err != nil {
-		err = fmt.Errorf("update statistics data failed, error: %w", err)
 		return nil, err
 	}
 
@@ -57,11 +51,6 @@ func (d *Db) GetMinTime(ctx context.Context) (*domain.Site, error) {
 		return nil, err
 	}
 
-	_, err = d.db.ExecContext(ctx, "UPDATE statistic SET number_of_requests = number_of_requests + 1 WHERE endpoint = 'getMinTime'")
-	if err != nil {
-		err = fmt.Errorf("update statistics data failed, error: %w", err)
-		return nil, err
-	}
 	return result, nil
 }
 
@@ -73,14 +62,18 @@ func (d *Db) GetMaxTime(ctx context.Context) (*domain.Site, error) {
 		return nil, err
 	}
 
-	_, err = d.db.ExecContext(ctx, "UPDATE statistic SET number_of_requests = number_of_requests + 1 WHERE endpoint = 'getMaxTime'")
-	if err != nil {
-		err = fmt.Errorf("update statistics data failed, error: %w", err)
-		return nil, err
-	}
 	return result, nil
 }
 
 func (d *Db) Update(ctx context.Context, newData map[string]time.Duration) error {
+	query := `INSERT INTO access (site, response_time) VALUES ($1, $2)`
+	for site, duration := range newData {
+		_, err := d.db.ExecContext(ctx, query, site, duration)
+		if err != nil {
+			err = fmt.Errorf("update data failed, error: %w", err)
+			return err
+		}
+	}
+
 	return nil
 }

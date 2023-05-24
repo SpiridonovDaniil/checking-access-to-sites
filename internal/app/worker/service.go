@@ -1,7 +1,7 @@
 package worker
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"context"
 	"net/http"
 	"siteAccess/internal/config"
 	"siteAccess/internal/repository/postgres"
@@ -9,10 +9,10 @@ import (
 	"time"
 )
 
-func Worker(cfg config.Site, db *postgres.Db) error {
+func Worker(ctx context.Context, cfgS config.Site, cfgU config.Interval, db *postgres.Db) error {
 	table := make(map[string]time.Duration)
 	var wg sync.WaitGroup
-	for _, site := range cfg.Site {
+	for _, site := range cfgS.Site {
 		site := site
 		wg.Add(1)
 		go func(url string) {
@@ -28,8 +28,10 @@ func Worker(cfg config.Site, db *postgres.Db) error {
 	}
 	wg.Wait()
 
-	ctx := fiber.Ctx{} // где взять?
-	err := db.Update(ctx.Context(), table)
+	ctx, cancel := context.WithTimeout(ctx, cfgU.DbTimeout)
+	defer cancel()
+
+	err := db.Update(ctx, table) //TODO передать указатель на карту?
 	if err != nil {
 		return err
 	}

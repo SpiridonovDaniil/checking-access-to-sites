@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"time"
 
 	dotenv "github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -13,6 +14,7 @@ type Config struct {
 	Postgres Postgres
 	Service  Service
 	Site     Site
+	Interval Interval
 	//Auth     Auth
 }
 
@@ -30,6 +32,11 @@ type Service struct {
 
 type Site struct {
 	Site []string `envconfig:"SITES"`
+}
+
+type Interval struct {
+	ReloadWorker time.Duration `envconfig:"RELOAD"`
+	DbTimeout    time.Duration `envconfig:"DBTIMEOUT"`
 }
 
 //type Auth struct {
