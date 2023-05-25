@@ -1,0 +1,88 @@
+basePath: /
+definitions:
+  domain.Answer:
+    properties:
+      message:
+        example: n/a
+        type: string
+      time:
+        example: 1
+        type: integer
+    type: object
+  domain.Site:
+    properties:
+      site:
+        example: example.com
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: daniil13.spiridonov@yandex.ru
+    name: Daniil56
+  description: Swagger API for Golang Project siteAccess
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: SiteAccess
+  version: "1.0"
+paths:
+  /max:
+    get:
+      consumes:
+      - application/json
+      description: gets the name of the site with the maximum access time
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Site'
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: get name site with maximum time
+  /min:
+    get:
+      consumes:
+      - application/json
+      description: gets the name of the site with the minimum access time
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Site'
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: get name site with minimal time
+  /site:
+    get:
+      consumes:
+      - application/json
+      description: gets the access time to the transferred site
+      parameters:
+      - description: 'Example: yandex.ru'
+        in: query
+        name: site
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Answer'
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: get the time on the site
+swagger: "2.0"

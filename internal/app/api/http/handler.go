@@ -2,11 +2,25 @@ package http
 
 import (
 	"fmt"
-	"github.com/gofiber/fiber/v2"
 	"net/http"
+
+	_ "siteAccess/docs"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
-func getTimeHandler(service service) func(ctx *fiber.Ctx) error {
+// GetTime godoc
+// @Summary      get the time on the site
+// @Description  gets the access time to the transferred site
+// @Accept       json
+// @Produce      json
+// @Param site query string true "Example: yandex.ru"
+// @Success      200  {object}  domain.Answer
+// @Failure      400  {object}  error
+// @Failure      500  {object}  error
+// @Router       /site [get]
+func getTimeHandler(service service, counter *prometheus.CounterVec) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		site := ctx.Query("site")
 		if site == "" {
@@ -23,12 +37,21 @@ func getTimeHandler(service service) func(ctx *fiber.Ctx) error {
 			ctx.Status(http.StatusInternalServerError)
 			return fmt.Errorf("[getTimeHandler] failed to return JSON answer, error: %w", err)
 		}
+		counter.With(prometheus.Labels{"endpoints": "getTimeHandler"}).Inc()
 
 		return nil
 	}
 }
 
-func getMinTimeHandler(service service) func(ctx *fiber.Ctx) error {
+// GetMin godoc
+// @Summary      get name site with minimal time
+// @Description  gets the name of the site with the minimum access time
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  domain.Site
+// @Failure      500  {object}  error
+// @Router       /min [get]
+func getMinTimeHandler(service service, counter *prometheus.CounterVec) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		resp, err := service.GetMinTime(ctx.Context())
 		if err != nil {
@@ -40,12 +63,21 @@ func getMinTimeHandler(service service) func(ctx *fiber.Ctx) error {
 			ctx.Status(http.StatusInternalServerError)
 			return fmt.Errorf("[getMinTimeHandler] failed to return JSON answer, error: %w", err)
 		}
+		counter.With(prometheus.Labels{"endpoints": "getMinTimeHandler"}).Inc()
 
 		return nil
 	}
 }
 
-func getMaxTimeHandler(service service) func(ctx *fiber.Ctx) error {
+// GetMax godoc
+// @Summary      get name site with maximum time
+// @Description  gets the name of the site with the maximum access time
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  domain.Site
+// @Failure      500  {object}  error
+// @Router       /max [get]
+func getMaxTimeHandler(service service, counter *prometheus.CounterVec) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		resp, err := service.GetMaxTime(ctx.Context())
 		if err != nil {
@@ -57,6 +89,7 @@ func getMaxTimeHandler(service service) func(ctx *fiber.Ctx) error {
 			ctx.Status(http.StatusInternalServerError)
 			return fmt.Errorf("[getMaxTimeHandler] failed to return JSON answer, error: %w", err)
 		}
+		counter.With(prometheus.Labels{"endpoints": "getMaxTimeHandler"}).Inc()
 
 		return nil
 	}

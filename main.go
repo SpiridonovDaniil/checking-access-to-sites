@@ -2,19 +2,32 @@ package main
 
 import (
 	"context"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
+	"time"
+
+	_ "siteAccess/docs"
 	router "siteAccess/internal/app/api/http"
 	"siteAccess/internal/app/api/service"
 	"siteAccess/internal/app/worker"
 	"siteAccess/internal/config"
 	"siteAccess/internal/repository/postgres"
-	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+// @title SiteAccess
+// @version 1.0
+// @description Swagger API for Golang Project siteAccess
+// @termsOfService http://swagger.io/terms/
+// @contact.name Daniil56
+// @contact.email daniil13.spiridonov@yandex.ru
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @host localhost:8080
+// @BasePath /
 func main() {
 	cfg := config.Read()
 
@@ -38,29 +51,25 @@ func main() {
 		}
 	}()
 
+	ro := http.NewServeMux()
+	ro.Handle("/metrics", promhttp.Handler())
+	rec := promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "endpoint_registered",
+		Help: "number of endpoints used",
+	},
+		[]string{"endpoints"},
+	)
+	go func() {
+		err := http.ListenAndServe(":9090", ro)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
 	service := service.New(db)
-	r := router.NewServer(service)
+	r := router.NewServer(service, rec)
 	err := r.Listen(":" + cfg.Service.Port)
 	if err != nil {
 		panic(err)
 	}
-
-	http.Handle("/metrics", promhttp.Handler())
-	rec := promauto.NewCounter(prometheus.CounterOpts{
-		Name: "endpoint_registered",
-		Help: "number of endpoints used",
-		ConstLabels: map[string]string{
-			"endpoint1": "site",
-			"endpoint2": "min",
-			"endpoint3": "max",
-		},
-	})
-	go func() {
-
-		err := http.ListenAndServe(":9090", nil)
-		if err != nil {
-			panic(err)
-		}
-		rec.Inc()
-	}()
 }

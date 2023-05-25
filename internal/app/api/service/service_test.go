@@ -2,22 +2,33 @@ package service
 
 import (
 	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
+	"strings"
+	"testing"
+
 	server "siteAccess/internal/app/api/http"
 	mock_http "siteAccess/internal/app/api/http/mocks"
 	"siteAccess/internal/domain"
-	"strings"
-	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/stretchr/testify/assert"
+)
+
+var rec = promauto.NewCounterVec(prometheus.CounterOpts{
+	Name: "endpoint_registered",
+	Help: "number of endpoints used",
+},
+	[]string{"endpoints"},
 )
 
 func TestService_GetTime(t *testing.T) {
-	type mockBehavior func(s *mock_http.Mockservice, serviceAnswer *domain.Time, expectedError error)
+	type mockBehavior func(s *mock_http.Mockservice, serviceAnswer *domain.Answer, expectedError error)
 	testTable := []struct {
 		name                   string
-		serviceAnswer          domain.Time
+		serviceAnswer          domain.Answer
 		mockBehavior           mockBehavior
 		expectedTestStatusCode int
 		expectedError          error
@@ -25,10 +36,10 @@ func TestService_GetTime(t *testing.T) {
 	}{
 		{
 			name: "create HTTP status 200",
-			serviceAnswer: domain.Time{
+			serviceAnswer: domain.Answer{
 				Time: 720,
 			},
-			mockBehavior: func(s *mock_http.Mockservice, serviceAnswer *domain.Time, expectedError error) {
+			mockBehavior: func(s *mock_http.Mockservice, serviceAnswer *domain.Answer, expectedError error) {
 				s.EXPECT().GetTime(gomock.Any(), gomock.Any()).Return(serviceAnswer, expectedError)
 			},
 			expectedTestStatusCode: 200,
@@ -41,7 +52,7 @@ func TestService_GetTime(t *testing.T) {
 		},
 		{
 			name: "create internal server error",
-			mockBehavior: func(s *mock_http.Mockservice, serviceAnswer *domain.Time, expectedError error) {
+			mockBehavior: func(s *mock_http.Mockservice, serviceAnswer *domain.Answer, expectedError error) {
 				s.EXPECT().GetTime(gomock.Any(), gomock.Any()).Return(nil, expectedError)
 			},
 			expectedTestStatusCode: 500,
@@ -63,7 +74,7 @@ func TestService_GetTime(t *testing.T) {
 				testCase.mockBehavior(service, nil, testCase.expectedError)
 			}
 
-			f := server.NewServer(service)
+			f := server.NewServer(service, rec)
 			var url string
 			if testCase.name == "create bad request" {
 				url = "/site"
@@ -129,7 +140,7 @@ func TestService_GetMinTime(t *testing.T) {
 				testCase.mockBehavior(service, nil, testCase.expectedError)
 			}
 
-			f := server.NewServer(service)
+			f := server.NewServer(service, rec)
 			url := "/min"
 			req, err := http.NewRequest("GET", url, strings.NewReader(""))
 			req.Header.Add("content-Type", "application/json")
@@ -190,7 +201,7 @@ func TestService_GetMaxTime(t *testing.T) {
 				testCase.mockBehavior(service, nil, testCase.expectedError)
 			}
 
-			f := server.NewServer(service)
+			f := server.NewServer(service, rec)
 			url := "/max"
 			req, err := http.NewRequest("GET", url, strings.NewReader(""))
 			req.Header.Add("content-Type", "application/json")

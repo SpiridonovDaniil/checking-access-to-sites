@@ -4,12 +4,12 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"github.com/pressly/goose/v3"
 	"log"
 
 	"siteAccess/internal/config"
 
 	_ "github.com/lib/pq"
+	"github.com/pressly/goose/v3"
 )
 
 const migrationPackage = "migration"

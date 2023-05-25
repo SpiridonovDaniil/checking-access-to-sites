@@ -66,10 +66,10 @@ func (mr *MockserviceMockRecorder) GetMinTime(ctx interface{}) *gomock.Call {
 }
 
 // GetTime mocks base method.
-func (m *Mockservice) GetTime(ctx context.Context, site string) (*domain.Time, error) {
+func (m *Mockservice) GetTime(ctx context.Context, site string) (*domain.Answer, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTime", ctx, site)
-	ret0, _ := ret[0].(*domain.Time)
+	ret0, _ := ret[0].(*domain.Answer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

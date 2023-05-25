@@ -3,10 +3,11 @@ package worker
 import (
 	"context"
 	"net/http"
-	"siteAccess/internal/config"
-	"siteAccess/internal/repository/postgres"
 	"sync"
 	"time"
+
+	"siteAccess/internal/config"
+	"siteAccess/internal/repository/postgres"
 )
 
 func Worker(ctx context.Context, cfgS config.Site, cfgU config.Interval, db *postgres.Db) error {
@@ -31,7 +32,7 @@ func Worker(ctx context.Context, cfgS config.Site, cfgU config.Interval, db *pos
 	ctx, cancel := context.WithTimeout(ctx, cfgU.DbTimeout)
 	defer cancel()
 
-	err := db.Update(ctx, table) //TODO передать указатель на карту?
+	err := db.Update(ctx, table)
 	if err != nil {
 		return err
 	}
