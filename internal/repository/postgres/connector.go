@@ -34,7 +34,7 @@ func New(cfg config.Postgres) *Db {
 
 func (d *Db) GetTime(ctx context.Context, site string) (*domain.Time, error) {
 	var result *domain.Time
-	err := d.db.SelectContext(ctx, &result, "SELECT response_time FROM access WHERE site = $1", site)
+	err := d.db.GetContext(ctx, &result.Time, "SELECT response_time FROM access WHERE site = $1", site)
 	if err != nil {
 		err = fmt.Errorf("get time failed, error: %w", err)
 		return nil, err
@@ -45,7 +45,8 @@ func (d *Db) GetTime(ctx context.Context, site string) (*domain.Time, error) {
 
 func (d *Db) GetMinTime(ctx context.Context) (*domain.Site, error) {
 	var result *domain.Site
-	err := d.db.SelectContext(ctx, &result, "SELECT site FROM access WHERE MIN(response_time)")
+	query := `SELECT site FROM access WHERE response_time = (SELECT MIN(response_time) FROM table)`
+	err := d.db.GetContext(ctx, &result, query)
 	if err != nil {
 		err = fmt.Errorf("get site failed, error: %w", err)
 		return nil, err
@@ -56,7 +57,12 @@ func (d *Db) GetMinTime(ctx context.Context) (*domain.Site, error) {
 
 func (d *Db) GetMaxTime(ctx context.Context) (*domain.Site, error) {
 	var result *domain.Site
-	err := d.db.SelectContext(ctx, &result, "SELECT site FROM access WHERE MAX(response_time)")
+	query := `
+	WITH maximum_time AS 
+		(SELECT MAX(response_time) FROM access)
+	SELECT site FROM access WHERE response_time = maximum_time
+	`
+	err := d.db.GetContext(ctx, &result, query)
 	if err != nil {
 		err = fmt.Errorf("get site failed, error: %w", err)
 		return nil, err

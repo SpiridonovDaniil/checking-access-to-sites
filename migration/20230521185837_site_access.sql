@@ -10,5 +10,4 @@ CREATE TABLE access
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE access;
-DROP TABLE statistic;
 -- +goose StatementEnd

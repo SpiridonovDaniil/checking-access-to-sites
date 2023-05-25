@@ -40,12 +40,10 @@ func main() {
 
 	service := service.New(db)
 	r := router.NewServer(service)
-	go func() {
-		err := r.Listen(":" + cfg.Service.Port)
-		if err != nil {
-			panic(err)
-		}
-	}()
+	err := r.Listen(":" + cfg.Service.Port)
+	if err != nil {
+		panic(err)
+	}
 
 	http.Handle("/metrics", promhttp.Handler())
 	rec := promauto.NewCounter(prometheus.CounterOpts{
